@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>A Garden For You ♡</title>
 
+<!-- Error reporter: shows any script problem on screen (loads first on purpose) -->
+<script>
+  window.__gardenErrors = [];
+  window.addEventListener('error', function (e) {
+    var msg = (e.message || 'Unknown error') + (e.lineno ? ' (line ' + e.lineno + ')' : '');
+    window.__gardenErrors.push(msg);
+    var box = document.getElementById('errorBox');
+    if (box) { box.textContent = '⚠ ' + msg; box.style.display = 'block'; }
+  });
+</script>
+
 <!-- Fonts (optional: the site falls back to system fonts if offline) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,6 +69,14 @@ body{
 .vignette{
   position:fixed;inset:0;pointer-events:none;z-index:2;
   background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+}
+
+/* On-screen error box (hidden unless something breaks) */
+#errorBox{
+  display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  max-width:90vw;padding:10px 16px;border-radius:12px;z-index:99;
+  background:rgba(60,10,25,.9);border:1px solid #ff6f91;color:#ffd6e0;
+  font:600 .85rem/1.4 var(--sans);text-align:center;
 }
 
 /* =========================================================
@@ -120,7 +139,7 @@ body{
 @keyframes hintPulse{50%{opacity:.45}}
 
 /* =========================================================
-   3. MINIMAL TOOLBAR
+   3. MINIMAL TOOLBAR (fades in with pure CSS)
    ========================================================= */
 .toolbar{
   position:fixed;left:50%;
@@ -132,10 +151,11 @@ body{
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,.08);
   box-shadow:0 6px 24px rgba(0,0,0,.35);
-  opacity:0;transition:opacity 1.4s ease, transform 1.4s ease;
+  opacity:0;
+  animation:barIn 1.4s ease 1.2s forwards;
   z-index:10;
 }
-.toolbar.show{opacity:1;transform:translate(-50%,0)}
+@keyframes barIn{to{opacity:1;transform:translate(-50%,0)}}
 .btn{
   position:relative;
   width:42px;height:42px;border-radius:50%;
@@ -161,4 +181,945 @@ body{
 .btn:hover .tip{opacity:1;transform:translate(-50%,0)}
 @media (hover:none){.tip{display:none}}
 
-/*
+/* =========================================================
+   4. FLOWER MESSAGE TOAST
+   ========================================================= */
+.toast{
+  position:fixed;z-index:20;pointer-events:none;
+  max-width:min(80vw,300px);
+  padding:8px 18px;border-radius:18px;
+  text-align:center;
+  font-family:var(--script);font-size:1.25rem;line-height:1.3;color:#fff;
+  background:rgba(24,10,28,.62);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,170,210,.3);
+  box-shadow:0 0 22px rgba(255,120,180,.28);
+  animation:toastUp 2.8s ease forwards;
+}
+@keyframes toastUp{
+  0%  {opacity:0;transform:translate(-50%,-80%) scale(.9)}
+  14% {opacity:1;transform:translate(-50%,-115%) scale(1)}
+  78% {opacity:1;transform:translate(-50%,-125%)}
+  100%{opacity:0;transform:translate(-50%,-160%)}
+}
+
+/* =========================================================
+   5. HIDDEN LOVE LETTER
+   ========================================================= */
+.letter-overlay{
+  position:fixed;inset:0;z-index:30;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(2,4,8,.62);
+  -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:opacity .6s ease;
+}
+.letter-overlay.open{opacity:1;pointer-events:auto}
+.letter{
+  position:relative;
+  width:min(92vw,440px);max-height:82vh;overflow-y:auto;
+  padding:42px 30px 28px;border-radius:16px;
+  color:#5b3347;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 27px, rgba(194,71,127,.08) 27px 28px),
+    linear-gradient(180deg,#fff9f4,#fbe7ee);
+  box-shadow:0 24px 70px rgba(0,0,0,.55), 0 0 70px rgba(255,150,200,.25);
+  transform:translateY(40px) scale(.94) rotate(-1.5deg);
+  transition:transform .8s cubic-bezier(.2,.8,.2,1);
+  user-select:text;-webkit-user-select:text;
+}
+.letter-overlay.open .letter{transform:none}
+.seal{
+  position:absolute;top:-1px;left:50%;transform:translate(-50%,-50%);
+  width:46px;height:46px;border-radius:50%;
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 35%,#ff7aa8,#c2386e);
+  color:#ffe3ee;font-size:1.2rem;
+  box-shadow:0 4px 14px rgba(160,30,80,.45), inset 0 0 0 3px rgba(255,255,255,.15);
+}
+.letter h2{
+  font-family:var(--script);font-size:2.1rem;color:#c2477f;
+  text-align:center;margin-bottom:6px;
+}
+.letter p{font-size:.95rem;line-height:1.85;margin-top:10px;font-weight:500}
+.letter .sign{
+  font-family:var(--script);font-size:1.5rem;color:#c2477f;
+  text-align:right;margin-top:20px;
+}
+.close-letter{
+  position:absolute;top:10px;right:12px;
+  width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(194,71,127,.1);color:#c2477f;font-size:1.2rem;line-height:1;
+  transition:background .3s, transform .3s;
+}
+.close-letter:hover{background:rgba(194,71,127,.2);transform:rotate(90deg)}
+
+@media (max-width:480px){
+  .message-card{top:27%;padding:22px 20px 20px}
+  .btn{width:40px;height:40px}
+}
+@media (prefers-reduced-motion:reduce){
+  .hint.show{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div id="errorBox" role="alert"></div>
+<div class="moon"></div>
+<canvas id="garden" aria-label="An animated garden of blooming flowers"></canvas>
+<div class="vignette"></div>
+
+<!-- =========================================================
+     💌 ROMANTIC MESSAGE: edit the heading and text here
+     ========================================================= -->
+<div class="message-card" id="messageCard">
+  <!-- ✏️ EDIT HEADING -->
+  <h1 class="message-title">My Love ♡</h1>
+  <div class="divider">✿</div>
+  <!-- ✏️ EDIT MESSAGE -->
+  <p class="message-text">
+    "I couldn't give you a garden full of real flowers, so I coded you one that will bloom forever.
+    Every flower is a little reminder of how special you are to me."
+  </p>
+</div>
+
+<p class="hint" id="hint">tap a flower ♡</p>
+
+<!-- =========================================================
+     TOOLBAR
+     ========================================================= -->
+<nav class="toolbar" id="toolbar" aria-label="Garden controls">
+  <button class="btn" id="btnRegrow" aria-label="Regrow the garden">
+    <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg>
+    <span class="tip">Regrow</span>
+  </button>
+  <button class="btn" id="btnMore" aria-label="Grow more flowers">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="2"/><path d="M12 7a2.6 2.6 0 1 1 0-5.2A2.6 2.6 0 1 1 12 7zM12 11a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 1 0 0-5.2zM10 9a2.6 2.6 0 1 0-5.2 0A2.6 2.6 0 1 0 10 9zM14 9a2.6 2.6 0 1 1 5.2 0A2.6 2.6 0 1 1 14 9z"/><path d="M12 16.2V22M12 20c-1.5-1.5-3-1.8-4.5-1.5"/></svg>
+    <span class="tip">More flowers</span>
+  </button>
+  <button class="btn" id="btnHearts" aria-label="Scatter hearts">
+    <svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg>
+    <span class="tip">Scatter hearts</span>
+  </button>
+  <button class="btn" id="btnMusic" aria-label="Toggle music" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+    <span class="tip">Music</span>
+  </button>
+  <button class="btn" id="btnLetter" aria-label="Open the love letter">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>
+    <span class="tip">A letter for you</span>
+  </button>
+</nav>
+
+<!-- =========================================================
+     💌 HIDDEN LOVE LETTER: edit the letter text here
+     ========================================================= -->
+<div class="letter-overlay" id="letterOverlay">
+  <div class="letter" role="dialog" aria-modal="true" aria-label="Love letter">
+    <div class="seal">♡</div>
+    <button class="close-letter" id="closeLetter" aria-label="Close letter">×</button>
+    <!-- ✏️ EDIT LETTER -->
+    <h2>To my favourite person</h2>
+    <p>I wanted to give you something that would never wilt, never fade, and never need watering, so I planted this little garden, one line of code at a time.</p>
+    <p>Every stem that grows here is a moment I've loved with you. Every petal is a smile you gave me without even knowing it.</p>
+    <p>Whenever the world feels heavy, come back here and watch it bloom again. It's yours, just like my heart.</p>
+    <p class="sign">Forever yours ♡</p>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ✏️ CUSTOMISE: messages shown when a flower is tapped
+   ========================================================= */
+var FLOWER_MESSAGES = [
+  "You make my heart bloom ♡",
+  "Every petal is a reason I love you",
+  "You're my favourite flower",
+  "I'd pick you, every single time",
+  "My heart grows for you each day",
+  "You are my sunshine",
+  "Forever and always, you ♡",
+  "Thank you for being you",
+  "You make ordinary days beautiful",
+  "I love you more than all the flowers",
+  "You're the reason I smile",
+  "Home is wherever you are"
+];
+
+(function () {
+  'use strict';
+
+  /* Show an error on screen (used by the safety nets below) */
+  function reportError(err) {
+    var box = document.getElementById('errorBox');
+    if (!box) return;
+    box.textContent = '⚠ ' + (err && err.message ? err.message : String(err));
+    box.style.display = 'block';
+    console.error(err);
+  }
+
+  /* =========================================================
+     HELPERS
+     ========================================================= */
+  const TAU = Math.PI * 2;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const randInt = (a, b) => Math.floor(rand(a, b + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const easeOutCubic = x => 1 - Math.pow(1 - x, 3);
+  const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const easeOutBack = x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const c1 = 1.70158, c3 = c1 + 1;
+    return Math.max(0, 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2));
+  };
+
+  /* Flower colour palette: petal base, petal tip, centre, glow (rgb) */
+  const PALETTE = [
+    { base:'#ff6fae', light:'#ffc6e0', center:'#ffd45e', centerDark:'#d9822a', glow:'255,111,174' }, // pink
+    { base:'#ffb0cf', light:'#fff0f6', center:'#ffe07a', centerDark:'#e0952f', glow:'255,176,207' }, // pastel pink
+    { base:'#e6e0ff', light:'#ffffff', center:'#ffcf4a', centerDark:'#d48a1c', glow:'255,255,255' }, // white
+    { base:'#ffc93c', light:'#fff4ad', center:'#ff9a3c', centerDark:'#b9541a', glow:'255,214,90'  }, // yellow
+    { base:'#ff8a3d', light:'#ffd2a6', center:'#ffe066', centerDark:'#b8541a', glow:'255,150,80'  }, // orange
+    { base:'#9b6bff', light:'#ddcbff', center:'#ffd75e', centerDark:'#d48a1c', glow:'170,130,255' }, // purple
+    { base:'#ff3b5c', light:'#ffa3b3', center:'#ffd15c', centerDark:'#c9711d', glow:'255,70,100'  }, // red
+    { base:'#c79bff', light:'#f4e8ff', center:'#ffe07a', centerDark:'#d48a1c', glow:'200,160,255' }  // lavender
+  ];
+  const HEART_COLORS = ['255,111,174', '255,150,190', '255,80,120', '255,190,215'];
+  const SPARK_COLORS = ['255,255,255', '255,210,235', '255,236,170', '205,185,255'];
+
+  /* =========================================================
+     CANVAS SETUP
+     ========================================================= */
+  const canvas = document.getElementById('garden');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) { reportError('Your browser could not start the drawing canvas.'); return; }
+
+  let W = 0, H = 0, DPR = 1, sc = 1;    // sc = size scale for responsiveness
+
+  /* =========================================================
+     STATE
+     ========================================================= */
+  let flowers = [];
+  let grass = [];
+  let sparkles = [];
+  let effects = [];          // burst sparks + hearts
+  let elapsed = 0;           // total running time (pauses when tab hidden)
+  let gardenStart = 0;       // when the current garden began growing
+  let bloomEndTime = 0;      // when the initial garden finishes blooming
+  let cardShown = false;
+  let nextAmbientHeart = 0;
+  let wind = 0;
+
+  const card = document.getElementById('messageCard');
+  const hint = document.getElementById('hint');
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth || document.documentElement.clientWidth || 800;
+    H = window.innerHeight || document.documentElement.clientHeight || 600;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    sc = clamp(Math.min(W, H) / 750, 0.62, 1.15);
+    makeSparkles();
+  }
+
+  /* Cached soft glow sprites (much faster than shadowBlur) */
+  const spriteCache = {};
+  function glowSprite(rgb) {
+    if (!spriteCache[rgb]) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 64;
+      const g = c.getContext('2d');
+      const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, `rgba(${rgb},1)`);
+      gr.addColorStop(0.25, `rgba(${rgb},0.45)`);
+      gr.addColorStop(1, `rgba(${rgb},0)`);
+      g.fillStyle = gr;
+      g.fillRect(0, 0, 64, 64);
+      spriteCache[rgb] = c;
+    }
+    return spriteCache[rgb];
+  }
+  function drawGlow(x, y, r, rgb, a) {
+    if (a <= 0.003 || r <= 0) return;
+    ctx.globalAlpha = clamp(a);
+    ctx.drawImage(glowSprite(rgb), x - r, y - r, r * 2, r * 2);
+    ctx.globalAlpha = 1;
+  }
+
+  /* Shape helpers */
+  function heartPath(s) {
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.6);
+    ctx.bezierCurveTo(-s * 1.25, -s * 0.15, -s * 0.6, -s * 1.05, 0, -s * 0.38);
+    ctx.bezierCurveTo(s * 0.6, -s * 1.05, s * 1.25, -s * 0.15, 0, s * 0.6);
+    ctx.closePath();
+  }
+  function starPath(x, y, r) {
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y);
+    ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.closePath();
+  }
+  /* Petal ellipse drawn with curves (works in every browser) */
+  function petalPath(cy, rx, ry) {
+    const k = 0.5523;
+    ctx.beginPath();
+    ctx.moveTo(0, cy - ry);
+    ctx.bezierCurveTo(rx * k, cy - ry, rx, cy - ry * k, rx, cy);
+    ctx.bezierCurveTo(rx, cy + ry * k, rx * k, cy + ry, 0, cy + ry);
+    ctx.bezierCurveTo(-rx * k, cy + ry, -rx, cy + ry * k, -rx, cy);
+    ctx.bezierCurveTo(-rx, cy - ry * k, -rx * k, cy - ry, 0, cy - ry);
+    ctx.closePath();
+  }
+
+  /* =========================================================
+     CREATION: flowers, grass, background sparkles
+     ========================================================= */
+  function createFlower(delay, fx) {
+    if (fx === undefined) fx = rand(0.03, 0.97);
+    const nearCenter = Math.abs(fx - 0.5) < 0.2;  // keep middle flowers lower so the message stays visible
+    const petals = randInt(7, 13);
+
+    const leaves = [];
+    const leafCount = randInt(1, 3);
+    let side = Math.random() < 0.5 ? -1 : 1;
+    for (let i = 0; i < leafCount; i++) {
+      leaves.push({
+        s: rand(0.15, 0.68),
+        side: side,
+        size: rand(0.7, 1.25),
+        col: `hsl(${rand(125, 152)},${rand(40, 58)}%,${rand(28, 42)}%)`
+      });
+      side *= -1;
+    }
+
+    return {
+      fx: fx,
+      fh: nearCenter ? rand(0.22, 0.5) : rand(0.3, 0.74),
+      curve: rand(-0.08, 0.08),
+      size: rand(0.75, 1.25),
+      petals: petals,
+      petalShape: clamp(3.3 / petals, 0.24, 0.5) * rand(0.9, 1.1),
+      rot: rand(0, TAU),
+      pal: pick(PALETTE),
+      glow: Math.random() < 0.45,
+      delay: delay,
+      stemDur: rand(2, 3.2),
+      budDur: rand(0.45, 0.8),
+      bloomDur: rand(1.3, 2),
+      swaySpeed: rand(0.7, 1.2),
+      swayPhase: rand(0, TAU),
+      swayAmp: rand(5, 12),
+      leaves: leaves,
+      popT: -99,
+      head: { x: 0, y: 0, r: 0, active: false }
+    };
+  }
+  const flowerEnd = f => f.delay + f.stemDur * 0.85 + f.budDur + f.bloomDur;
+
+  function makeGarden() {
+    const n = Math.round(clamp(W / 28, 18, 60));
+    flowers = [];
+    for (let i = 0; i < n; i++) {
+      const fx = (i + rand(0.1, 0.9)) / n;      // even spread with natural jitter
+      flowers.push(createFlower(rand(0.4, 3.6), fx));
+    }
+    flowers.sort((a, b) => b.fh - a.fh);         // taller flowers behind
+    bloomEndTime = 0;
+    for (const f of flowers) bloomEndTime = Math.max(bloomEndTime, flowerEnd(f));
+
+    const g = Math.round(clamp(W / 6, 60, 260));
+    grass = [];
+    for (let i = 0; i < g; i++) {
+      grass.push({
+        fx: Math.random(),
+        h: rand(8, 34),
+        lean: rand(-9, 9),
+        w: rand(1, 2.2),
+        ph: rand(0, TAU),
+        delay: rand(0, 1.2),
+        col: `hsla(${rand(128, 158)},${rand(35, 55)}%,${rand(20, 38)}%,${rand(0.6, 0.95)})`,
+        front: Math.random() < 0.4
+      });
+    }
+  }
+
+  function makeSparkles() {
+    const n = Math.round(clamp(W * H / 12000, 40, 140));
+    sparkles = [];
+    for (let i = 0; i < n; i++) {
+      sparkles.push({
+        x: rand(0, W), y: rand(0, H),
+        r: rand(0.6, 1.8),
+        vy: rand(4, 14), vx: rand(-4, 4),
+        ph: rand(0, TAU), sp: rand(0.8, 2.6),
+        rgb: pick(SPARK_COLORS)
+      });
+    }
+  }
+
+  /* =========================================================
+     DRAWING: background sparkles
+     ========================================================= */
+  function drawSparkles(dt, t) {
+    const fadeIn = clamp(t / 2.5);
+    ctx.globalCompositeOperation = 'lighter';
+    for (const s of sparkles) {
+      s.y -= s.vy * dt;
+      s.x += (s.vx + Math.sin(elapsed * 0.6 + s.ph) * 4) * dt;
+      if (s.y < -10) { s.y = H + 10; s.x = rand(0, W); }
+      if (s.x < -10) s.x = W + 10;
+      if (s.x > W + 10) s.x = -10;
+      const a = (0.5 + 0.5 * Math.sin(elapsed * s.sp + s.ph)) * fadeIn;
+      drawGlow(s.x, s.y, s.r * 6, s.rgb, a * 0.35);
+      ctx.fillStyle = `rgba(${s.rgb},${0.25 + 0.6 * a})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 0.7, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  /* =========================================================
+     DRAWING: grass blades
+     ========================================================= */
+  function drawGrass(t, front) {
+    ctx.lineCap = 'round';
+    const gs = 0.7 + sc * 0.5;
+    for (const b of grass) {
+      if (b.front !== front) continue;
+      const k = easeOutCubic(clamp((t - b.delay) / 1.2));
+      if (k <= 0) continue;
+      const x = b.fx * W;
+      const h = b.h * gs * k;
+      const sw = (Math.sin(elapsed * 1.2 + b.ph) * 3 + wind * 0.6) * k;
+      ctx.strokeStyle = b.col;
+      ctx.lineWidth = b.w;
+      ctx.beginPath();
+      ctx.moveTo(x, H + 2);
+      ctx.quadraticCurveTo(x + b.lean * 0.3, H - h * 0.5, x + b.lean + sw, H - h);
+      ctx.stroke();
+    }
+  }
+
+  /* =========================================================
+     DRAWING: a single flower (stem → leaves → bud → bloom)
+     ========================================================= */
+  function drawFlower(f, t) {
+    const lt = t - f.delay;
+    if (lt <= 0) { f.head.active = false; return; }
+
+    const g = easeInOut(clamp(lt / f.stemDur));                                // stem growth
+    const bud = clamp((lt - f.stemDur * 0.85) / f.budDur);                     // bud forming
+    const bloom = clamp((lt - f.stemDur * 0.85 - f.budDur) / f.bloomDur);       // petals opening
+
+    const bx = f.fx * W;
+    const hp = f.fh * H;
+    const sway = (Math.sin(elapsed * f.swaySpeed + f.swayPhase) * f.swayAmp + wind * (0.6 + f.fh)) * g;
+
+    // Point along the (full) stem curve, u = 0 (ground) … 1 (top)
+    const pt = u => ({
+      x: bx + Math.sin(u * Math.PI * 0.9) * f.curve * hp + sway * u * u,
+      y: H - u * hp
+    });
+
+    /* ---- Stem ---- */
+    const grad = ctx.createLinearGradient(0, H, 0, H - hp);
+    grad.addColorStop(0, '#163d29');
+    grad.addColorStop(1, '#5bbf7a');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = (1.4 + f.size * 0.9) * sc + 0.3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    const steps = 22;
+    for (let i = 0; i <= steps; i++) {
+      const p = pt(g * i / steps);
+      if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    /* ---- Leaves (unfold as the stem passes them) ---- */
+    for (const lf of f.leaves) {
+      if (g <= lf.s) continue;
+      const k = easeOutBack(clamp((g - lf.s) / 0.2));
+      if (k <= 0) continue;
+      const p = pt(lf.s), q = pt(lf.s + 0.02);
+      const ang = Math.atan2(q.y - p.y, q.x - p.x) +
+                  lf.side * (0.95 + Math.sin(elapsed * 1.4 + lf.s * 9) * 0.08);
+      const len = (13 + lf.size * 8) * sc * k;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(ang);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(len * 0.45, -len * 0.38, len, 0);
+      ctx.quadraticCurveTo(len * 0.45, len * 0.38, 0, 0);
+      ctx.fillStyle = lf.col;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(180,255,200,0.22)';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(len * 0.85, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* ---- Head (bud + flower) ---- */
+    const tip = pt(g);
+    const below = pt(Math.max(g - 0.03, 0));
+    const tilt = (Math.atan2(tip.y - below.y, tip.x - below.x) + Math.PI / 2) * 0.7;
+    const L = (15 + f.size * 10) * sc;     // petal length
+
+    ctx.save();
+    ctx.translate(tip.x, tip.y);
+    ctx.rotate(tilt);
+
+    // Bounce after a tap + soft "breathing" once fully bloomed
+    let sc2 = 1;
+    const dp = elapsed - f.popT;
+    if (dp < 1.6) sc2 += 0.35 * Math.exp(-dp * 3.5) * Math.sin(dp * 16);
+    if (bloom >= 1) sc2 *= 1 + 0.025 * Math.sin(elapsed * 1.6 + f.swayPhase);
+    sc2 = Math.max(0.3, sc2);
+    ctx.scale(sc2, sc2);
+
+    // Glow halo
+    if (bloom > 0) {
+      let ga = (f.glow ? 0.34 : 0.1) * bloom * (0.85 + 0.15 * Math.sin(elapsed * 2 + f.swayPhase));
+      if (dp < 1.6) ga += 0.55 * (1 - dp / 1.6);
+      ctx.globalCompositeOperation = 'lighter';
+      drawGlow(0, 0, L * 2.6, f.pal.glow, ga);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Bud
+    if (bud > 0 && bloom < 1) {
+      const bs = easeOutBack(bud);
+      const r = Math.max(0.1, L * 0.32 * bs);
+      ctx.globalAlpha = 1 - clamp(bloom * 1.6);
+      ctx.fillStyle = '#2f7a48';
+      for (const sd of [-1, 1]) {                      // sepals
+        ctx.beginPath();
+        ctx.moveTo(0, r * 0.4);
+        ctx.quadraticCurveTo(sd * r * 1.1, r * 0.2, sd * r * 0.9, -r * 0.6);
+        ctx.quadraticCurveTo(sd * r * 0.4, -r * 0.1, 0, r * 0.4);
+        ctx.fill();
+      }
+      const bg = ctx.createLinearGradient(0, r * 0.5, 0, -r * 1.6);
+      bg.addColorStop(0, '#3f9a5c');
+      bg.addColorStop(0.7, f.pal.base);
+      bg.addColorStop(1, f.pal.light);
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.6);
+      ctx.bezierCurveTo(r * 1.1, -r * 0.9, r * 0.9, r * 0.4, 0, r * 0.5);
+      ctx.bezierCurveTo(-r * 0.9, r * 0.4, -r * 1.1, -r * 0.9, 0, -r * 1.6);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Petals unfurl one by one
+    if (bloom > 0) {
+      const pg = ctx.createRadialGradient(0, 0, L * 0.1, 0, 0, L);
+      pg.addColorStop(0, f.pal.base);
+      pg.addColorStop(1, f.pal.light);
+      const spin = (1 - easeOutCubic(bloom)) * 0.8;
+      for (let i = 0; i < f.petals; i++) {
+        const start = (i / f.petals) * 0.55;
+        const pk = easeOutBack(clamp((bloom - start) / 0.45));
+        if (pk <= 0.01) continue;
+        const pl = L * pk;
+        const pw = L * f.petalShape * Math.min(pk, 1);
+        ctx.save();
+        ctx.rotate(f.rot + i * TAU / f.petals + spin);
+        petalPath(-pl * 0.52, pw * 0.5, pl * 0.5);
+        ctx.fillStyle = pg;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Round centre with little seed dots
+      const cs = easeOutBack(clamp((bloom - 0.15) / 0.5));
+      const cr = L * 0.3 * cs;
+      if (cr > 0.5) {
+        const cg = ctx.createRadialGradient(-cr * 0.3, -cr * 0.3, 0, 0, 0, cr);
+        cg.addColorStop(0, '#fff4b8');
+        cg.addColorStop(0.55, f.pal.center);
+        cg.addColorStop(1, f.pal.centerDark);
+        ctx.fillStyle = cg;
+        ctx.beginPath();
+        ctx.arc(0, 0, cr, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(120,60,0,0.3)';
+        for (let k = 0; k < 7; k++) {
+          const a = k * TAU / 7 + f.rot;
+          ctx.beginPath();
+          ctx.arc(Math.cos(a) * cr * 0.55, Math.sin(a) * cr * 0.55, cr * 0.11, 0, TAU);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.beginPath();
+        ctx.arc(-cr * 0.35, -cr * 0.35, cr * 0.18, 0, TAU);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // Save head position for tap detection
+    f.head.x = tip.x;
+    f.head.y = tip.y;
+    f.head.r = L * sc2;
+    f.head.active = bloom > 0.3;
+  }
+
+  /* =========================================================
+     EFFECTS: sparks & hearts
+     ========================================================= */
+  function addEffect(e) {
+    if (effects.length > 650) effects.shift();
+    effects.push(Object.assign({ life: 0, rot: rand(-0.3, 0.3), drag: 0.96, fadeIn: 0, alpha: 1 }, e));
+  }
+
+  function burst(x, y, rgb, sparks, hearts) {
+    if (sparks === undefined) sparks = 18;
+    if (hearts === undefined) hearts = 4;
+    for (let i = 0; i < sparks; i++) {
+      const a = rand(0, TAU), sp = rand(60, 210);
+      addEffect({ type: 'spark', x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40,
+                  g: 70, max: rand(0.7, 1.3), size: rand(2, 4.5), rgb: Math.random() < 0.5 ? rgb : pick(SPARK_COLORS) });
+    }
+    for (let i = 0; i < hearts; i++) {
+      addEffect({ type: 'heart', x: x + rand(-10, 10), y: y, vx: rand(-50, 50), vy: rand(-130, -70),
+                  g: -10, max: rand(1.4, 2.2), size: rand(5, 9) * (0.7 + sc * 0.4), rgb: pick(HEART_COLORS) });
+    }
+  }
+
+  function scatterHearts() {
+    const g = 260;
+    for (let i = 0; i < 45; i++) {
+      addEffect({ type: 'heart', x: rand(0, W), y: H + rand(0, 40), vx: rand(-40, 40),
+                  vy: -Math.sqrt(2 * g * rand(0.35, 0.85) * H), g: g, drag: 0.995,
+                  max: rand(2.6, 3.8), size: rand(6, 12) * (0.7 + sc * 0.4), rgb: pick(HEART_COLORS) });
+    }
+    for (let i = 0; i < 40; i++) {
+      addEffect({ type: 'spark', x: rand(0, W), y: rand(H * 0.1, H * 0.9), vx: rand(-15, 15), vy: rand(-25, 5),
+                  g: 0, max: rand(1.2, 2.4), size: rand(2, 4.5), fadeIn: 0.3, rgb: pick(SPARK_COLORS) });
+    }
+  }
+
+  function spawnAmbientHeart() {
+    addEffect({ type: 'heart', ambient: true, x: rand(W * 0.05, W * 0.95), y: rand(H * 0.7, H * 0.95),
+                vx: 0, vy: -rand(12, 24), g: 0, drag: 1, max: rand(5, 8), fadeIn: 1, alpha: 0.75,
+                size: rand(4, 6.5) * (0.7 + sc * 0.4), rgb: pick(HEART_COLORS), wob: rand(0, TAU) });
+  }
+
+  function drawEffects(dt) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = effects.length - 1; i >= 0; i--) {
+      const e = effects[i];
+      e.life += dt;
+      if (e.life >= e.max) { effects.splice(i, 1); continue; }
+
+      const d = Math.pow(e.drag, dt * 60);
+      e.vx *= d; e.vy *= d;
+      e.vy += e.g * dt;
+      e.x += e.vx * dt + (e.ambient ? Math.sin(e.life * 1.5 + e.wob) * 10 * dt : 0);
+      e.y += e.vy * dt;
+
+      const fadeIn = e.fadeIn ? clamp(e.life / e.fadeIn) : 1;
+      let a;
+      if (e.type === 'spark') a = 1 - e.life / e.max;
+      else a = e.life < e.max * 0.65 ? 1 : (e.max - e.life) / (e.max * 0.35);
+      a = clamp(a * fadeIn * e.alpha);
+
+      if (e.type === 'spark') {
+        drawGlow(e.x, e.y, e.size * 4, e.rgb, a * 0.6);
+        ctx.fillStyle = `rgba(${e.rgb},${a})`;
+        starPath(e.x, e.y, e.size * (0.6 + 0.4 * a));
+        ctx.fill();
+      } else {
+        drawGlow(e.x, e.y, e.size * 3.2, e.rgb, a * 0.45);
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        ctx.rotate(e.rot + Math.sin(e.life * 3) * 0.25);
+        const pop = Math.max(0.01, Math.min(1, e.life * 6));
+        ctx.scale(pop, pop);
+        heartPath(e.size);
+        ctx.fillStyle = `rgba(${e.rgb},${a * 0.9})`;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  /* =========================================================
+     MAIN LOOP (with a safety net so one bad frame can't freeze it)
+     ========================================================= */
+  let last = null;
+  let errorShown = false;
+
+  function frame(ts) {
+    try {
+      const now = (ts || performance.now()) / 1000;
+      if (last === null) last = now;
+      const dt = Math.min(0.05, Math.max(0, now - last));
+      last = now;
+      elapsed += dt;
+      const t = elapsed - gardenStart;
+      wind = Math.sin(elapsed * 0.4) * 3 + Math.sin(elapsed * 0.17) * 2;
+
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, W, H);
+
+      drawSparkles(dt, t);
+      drawGrass(t, false);
+      for (const f of flowers) drawFlower(f, t);
+      drawGrass(t, true);
+      drawEffects(dt);
+
+      // Reveal the message once the garden has bloomed
+      if (!cardShown && t > bloomEndTime - 0.3) {
+        cardShown = true;
+        card.classList.add('show');
+        hint.classList.add('show');
+        nextAmbientHeart = elapsed + 1;
+      }
+      // Small floating hearts between the flowers
+      if (cardShown && elapsed > nextAmbientHeart) {
+        spawnAmbientHeart();
+        nextAmbientHeart = elapsed + rand(1.1, 2.3);
+      }
+    } catch (err) {
+      if (!errorShown) { errorShown = true; reportError(err); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* =========================================================
+     INTERACTION
+     ========================================================= */
+  function flowerAt(x, y) {
+    for (let i = flowers.length - 1; i >= 0; i--) {     // front-most first
+      const f = flowers[i];
+      if (!f.head.active) continue;
+      const r = Math.max(f.head.r * 1.15, 22);
+      const dx = x - f.head.x, dy = y - f.head.y;
+      if (dx * dx + dy * dy < r * r) return f;
+    }
+    return null;
+  }
+
+  let currentToast = null;
+  let lastMsg = -1;
+  function showToast(text, x, y) {
+    if (currentToast) currentToast.remove();
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = text;
+    const m = Math.min(W / 2, 150);
+    el.style.left = clamp(x, m, W - m) + 'px';
+    el.style.top = Math.max(y - 18, 80) + 'px';
+    document.body.appendChild(el);
+    currentToast = el;
+    setTimeout(() => { el.remove(); if (currentToast === el) currentToast = null; }, 2900);
+  }
+  function randomMessage() {
+    let i;
+    do { i = Math.floor(Math.random() * FLOWER_MESSAGES.length); }
+    while (i === lastMsg && FLOWER_MESSAGES.length > 1);
+    lastMsg = i;
+    return FLOWER_MESSAGES[i];
+  }
+
+  canvas.addEventListener('click', e => {
+    const f = flowerAt(e.clientX, e.clientY);
+    if (f) {
+      f.popT = elapsed;
+      burst(f.head.x, f.head.y, f.pal.glow, 20, 4);
+      showToast(randomMessage(), f.head.x, f.head.y - f.head.r);
+    } else {
+      burst(e.clientX, e.clientY, pick(SPARK_COLORS), 8, 0);   // tiny sparkle anywhere
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    canvas.style.cursor = flowerAt(e.clientX, e.clientY) ? 'pointer' : 'default';
+  });
+
+  /* ---- Buttons ---- */
+  function regrow() {
+    card.classList.remove('show');
+    hint.classList.remove('show');
+    cardShown = false;
+    effects = [];
+    gardenStart = elapsed;
+    makeGarden();
+  }
+  document.getElementById('btnRegrow').addEventListener('click', regrow);
+
+  document.getElementById('btnMore').addEventListener('click', () => {
+    if (flowers.length > 110) {
+      showToast('The garden is full of love ♡', W / 2, H - 90);
+      return;
+    }
+    const t = elapsed - gardenStart;
+    const n = randInt(6, 9);
+    for (let i = 0; i < n; i++) flowers.push(createFlower(t + rand(0, 1.4)));
+    flowers.sort((a, b) => b.fh - a.fh);
+    showToast('A few more blooms for you ✿', W / 2, H - 90);
+  });
+
+  document.getElementById('btnHearts').addEventListener('click', scatterHearts);
+
+  /* =========================================================
+     MUSIC: a soft music-box melody made with Web Audio
+     (silently skipped if audio isn't supported)
+     ========================================================= */
+  const Music = {
+    ac: null, master: null, timer: null, playing: false, nextTime: 0, step: 0,
+    // C – Am – F – G progression
+    arp:  [[72,76,79,84], [69,72,76,81], [65,69,72,77], [67,71,74,79]],
+    pad:  [[60,64,67],    [57,60,64],    [53,57,60],    [55,59,62]],
+    bass: [48, 45, 41, 43],
+    pattern: [0, 1, 2, 3, 2, 1, 2, 1],
+    beat: 0.32,
+
+    init: function () {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error('Web Audio not supported');
+      this.ac = new AC();
+      this.master = this.ac.createGain();
+      this.master.gain.value = 0;
+      const filter = this.ac.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2400;
+      const delay = this.ac.createDelay();
+      delay.delayTime.value = 0.38;
+      const feedback = this.ac.createGain();
+      feedback.gain.value = 0.32;
+      const wet = this.ac.createGain();
+      wet.gain.value = 0.28;
+      this.master.connect(filter);
+      filter.connect(this.ac.destination);
+      filter.connect(delay);
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(wet);
+      wet.connect(this.ac.destination);
+    },
+    mtof: function (m) { return 440 * Math.pow(2, (m - 69) / 12); },
+    tone: function (freq, time, dur, type, vol) {
+      const o = this.ac.createOscillator();
+      const g = this.ac.createGain();
+      const attack = dur > 2 ? 0.4 : 0.012;
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, time);
+      g.gain.linearRampToValueAtTime(vol, time + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+      o.connect(g);
+      g.connect(this.master);
+      o.start(time);
+      o.stop(time + dur + 0.05);
+    },
+    schedule: function () {
+      while (this.nextTime < this.ac.currentTime + 0.4) {
+        const bar = Math.floor(this.step / 8) % 4;
+        const i = this.step % 8;
+        const note = this.arp[bar][this.pattern[i]];
+        this.tone(this.mtof(note), this.nextTime, 1.6, 'sine', 0.1);
+        this.tone(this.mtof(note + 12), this.nextTime, 0.5, 'sine', 0.018);
+        if (i === 0) {
+          this.tone(this.mtof(this.bass[bar]), this.nextTime, this.beat * 8, 'triangle', 0.06);
+          for (const n of this.pad[bar]) this.tone(this.mtof(n), this.nextTime, this.beat * 8, 'sine', 0.016);
+        }
+        this.nextTime += this.beat;
+        this.step++;
+      }
+    },
+    start: function () {
+      const t = this.ac.currentTime;
+      this.nextTime = t + 0.1;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.setValueAtTime(this.master.gain.value, t);
+      this.master.gain.linearRampToValueAtTime(0.9, t + 1.5);
+      clearInterval(this.timer);
+      this.schedule();
+      this.timer = setInterval(() => { try { this.schedule(); } catch (e) { console.warn(e); } }, 100);
+      this.playing = true;
+    },
+    stop: function () {
+      const t = this.ac.currentTime;
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.setValueAtTime(this.master.gain.value, t);
+      this.master.gain.linearRampToValueAtTime(0, t + 0.8);
+      clearInterval(this.timer);
+      this.playing = false;
+    }
+  };
+
+  const musicBtn = document.getElementById('btnMusic');
+  function setMusicButton(on) {
+    musicBtn.classList.toggle('active', on);
+    musicBtn.setAttribute('aria-pressed', String(on));
+  }
+  musicBtn.addEventListener('click', () => {
+    try {
+      if (!Music.ac) Music.init();
+      if (Music.playing) { Music.stop(); setMusicButton(false); return; }
+      const p = Music.ac.resume();
+      const go = () => { Music.start(); setMusicButton(true); };
+      if (p && typeof p.then === 'function') p.then(go).catch(() => { go(); });
+      else go();
+    } catch (err) {
+      console.warn('Music unavailable:', err);
+      setMusicButton(false);
+      showToast("Music isn't available here, but the flowers still bloom ♡", W / 2, H - 90);
+    }
+  });
+
+  /* ---- Love letter ---- */
+  const overlay = document.getElementById('letterOverlay');
+  function openLetter() {
+    overlay.classList.add('open');
+    burst(W / 2, H / 2, '255,150,190', 26, 6);
+  }
+  function closeLetter() { overlay.classList.remove('open'); }
+  document.getElementById('btnLetter').addEventListener('click', openLetter);
+  document.getElementById('closeLetter').addEventListener('click', closeLetter);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeLetter(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLetter(); });
+
+  /* =========================================================
+     START
+     ========================================================= */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 120);
+  });
+
+  try {
+    resize();
+    makeGarden();
+    requestAnimationFrame(frame);
+  } catch (err) {
+    reportError(err);
+  }
+})();
+</script>
+</body>
+</html>
